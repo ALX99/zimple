@@ -6,17 +6,19 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 )
 
 // Block represents a single block in the statusbar
 type Block struct {
-	output   chan string
-	sigChan  chan os.Signal
-	Command  string        `yaml:"command"`
-	Icon     string        `yaml:"icon"`
-	Args     []string      `yaml:"args"`
-	Interval time.Duration `yaml:"interval"`
+	output        chan string
+	sigChan       chan os.Signal
+	Command       string        `yaml:"command"`
+	Icon          string        `yaml:"icon"`
+	Args          []string      `yaml:"args"`
+	UpdateSignals []int         `yaml:"update_signals"`
+	Interval      time.Duration `yaml:"interval"`
 }
 
 // Start starts executing the block and returns a channel where output
@@ -35,8 +37,13 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 				return
 
 			case sig := <-b.sigChan:
-				fmt.Println("got signal", sig)
-			// b.runAndSend(ctx)
+				sigNum := int(sig.(syscall.Signal))
+				for _, i := range b.UpdateSignals {
+					if i == sigNum {
+						b.runAndSend(ctx)
+						break
+					}
+				}
 
 			case <-time.After(b.Interval):
 				b.runAndSend(ctx)
