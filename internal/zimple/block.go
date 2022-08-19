@@ -26,7 +26,7 @@ type Block struct {
 // The output channel will be closed when the context is cancelled
 func (b *Block) Start(ctx context.Context) <-chan string {
 	b.output = make(chan string)
-	b.sigChan = make(chan os.Signal)
+	b.sigChan = make(chan os.Signal, 100)
 
 	go func() {
 		b.runAndSend(ctx)
@@ -56,6 +56,11 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 
 // runAndSend runs the block and sends the result to the output channel
 func (b *Block) runAndSend(ctx context.Context) {
+	// Drain the signal channel, we are
+	// already going to run the block
+	for len(b.sigChan) > 0 {
+		<-b.sigChan
+	}
 	o, err := b.run(ctx)
 	if err != nil {
 		b.output <- "err: " + err.Error()
