@@ -3,6 +3,7 @@ package zimple
 import (
 	"os"
 	"path"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -14,9 +15,25 @@ type Config struct {
 
 // GetConfig reads, pareses and returns the configuration
 func GetConfig() (Config, error) {
-	f, err := os.ReadFile(getCfgFileLoc())
+	cfgLoc := getCfgFileLoc()
+	f, err := os.ReadFile(cfgLoc)
 	if err != nil {
-		return Config{}, err
+		if !os.IsNotExist(err) {
+			return Config{}, err
+		}
+
+		// Safe default if no config found
+		return Config{
+			Blocks: []Block{{
+				output:        make(chan string),
+				sigChan:       make(chan os.Signal),
+				Command:       "printf",
+				Icon:          "",
+				Args:          []string{"config file %s missing", cfgLoc},
+				UpdateSignals: []int{},
+				Interval:      time.Hour,
+			}},
+		}, nil
 	}
 
 	cfg := Config{}
