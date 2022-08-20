@@ -5,10 +5,10 @@ install: build
 
 build:
 	mkdir -p ./build
-	go build -ldflags "-s -w" -o ./build/${NAME} ./cmd/main.go
+	go build -ldflags "-s -w" -o ./build/${NAME} ./cmd/zimple/zimple.go
 
 run:
-	go run ./cmd/main.go
+	go run ./cmd/zimple/zimple.go
 
 clean:
 	rm -rf ./build
