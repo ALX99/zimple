@@ -30,7 +30,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 	wg := sync.WaitGroup{}
 	mu := sync.RWMutex{}
 	outputs := make([]string, len(cfg.Blocks))
-	sigRedraw := make(chan any)
+	sigRedraw := make(chan interface{})
 	sigChan := make(chan os.Signal, 10)
 	signal.Notify(sigChan)
 
