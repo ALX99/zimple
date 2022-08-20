@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGQUIT)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	cfg, err := zimple.GetConfig()
 	if err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
