@@ -16,6 +16,7 @@ type Block struct {
 	sigChan       chan os.Signal
 	Command       string        `yaml:"command"`
 	Icon          string        `yaml:"icon"`
+	Enabled       string        `yaml:"enabled"`
 	Args          []string      `yaml:"args"`
 	UpdateSignals []int         `yaml:"update_signals"`
 	Interval      time.Duration `yaml:"interval"`

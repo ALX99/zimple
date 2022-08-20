@@ -1,7 +1,11 @@
 package zimple
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"time"
 
@@ -34,6 +38,7 @@ func GetConfig() (Config, error) {
 				sigChan:       make(chan os.Signal),
 				Command:       "printf",
 				Icon:          "",
+				Enabled:       "",
 				Args:          []string{"config file %s missing", cfgLoc},
 				UpdateSignals: []int{},
 				Interval:      time.Hour,
@@ -42,7 +47,41 @@ func GetConfig() (Config, error) {
 	}
 
 	cfg := Config{}
-	return cfg, yaml.Unmarshal(f, &cfg)
+	if err = yaml.Unmarshal(f, &cfg); err != nil {
+		return Config{}, err
+	}
+
+	if cfg.Blocks, err = filterDisabledBlocks(cfg.Blocks); err != nil {
+		return Config{}, err
+	}
+
+	return cfg, nil
+}
+
+// filterDisabledBlocks removes all blocks that are not enabled
+func filterDisabledBlocks(blocks []Block) ([]Block, error) {
+	bls := make([]Block, 0, len(blocks))
+	for _, block := range blocks {
+		if block.Enabled == "" {
+			bls = append(bls, block)
+			continue
+		}
+
+		var ee *exec.ExitError
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		_, err := exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("if %s;then exit 0;else exit 21;fi", block.Enabled)).CombinedOutput()
+		if err != nil {
+			if errors.As(err, &ee) && ee.ExitCode() == 21 {
+				continue
+			}
+			return []Block{}, err
+		}
+
+		bls = append(bls, block)
+	}
+
+	return bls, nil
 }
 
 // getCfgFileLoc returns the configuration file location
