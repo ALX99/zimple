@@ -17,7 +17,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGQUIT)
 	cfg, err := zimple.GetConfig()
 	if err != nil {
-		os.Stderr.Write([]byte(err.Error()))
+		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 
@@ -78,7 +78,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 				err = exec.CommandContext(ctx, "xsetroot", "-name", fmt.Sprintf("error: %s", err)).Run()
 				if err != nil {
 					// Give up
-					os.Stderr.Write([]byte(fmt.Sprintf("error: %s", err)))
+					fmt.Fprint(os.Stderr, err.Error())
 				}
 			}
 			mu.RUnlock()
