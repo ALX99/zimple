@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/alx99/zimple/internal/zimple"
 )
@@ -68,6 +69,12 @@ func run(ctx context.Context, cfg zimple.Config) {
 			// Drain the signals
 			for range sigRedraw {
 			}
+			newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+			err := exec.CommandContext(newCtx, "xsetroot", "-name", "Zimple has shut down").Run()
+			if err != nil {
+				fmt.Fprint(os.Stderr, err.Error())
+			}
+			cancel()
 			return
 
 		case <-sigRedraw:
