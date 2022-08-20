@@ -29,6 +29,10 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 	b.output = make(chan string)
 	b.sigChan = make(chan os.Signal, 100)
 
+	if b.Interval == 0 {
+		b.Interval = 30 * 24 * time.Hour
+	}
+
 	go func() {
 		b.runAndSend(ctx)
 		for {
