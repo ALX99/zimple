@@ -72,7 +72,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 
 		case <-sigRedraw:
 			mu.RLock()
-			err := exec.CommandContext(ctx, "xsetroot", "-name", strings.Join(outputs, " / ")).Run()
+			err := exec.CommandContext(ctx, "xsetroot", "-name", strings.Join(outputs, cfg.Settings.Separator)).Run()
 			if err != nil {
 				// Give it a second try
 				err = exec.CommandContext(ctx, "xsetroot", "-name", fmt.Sprintf("error: %s", err)).Run()

@@ -10,7 +10,12 @@ import (
 
 // Config represents all of the configuration options
 type Config struct {
-	Blocks []Block `yaml:"blocks"`
+	Settings Settings `yaml:"settings"`
+	Blocks   []Block  `yaml:"blocks"`
+}
+
+type Settings struct {
+	Separator string `yaml:"separator"`
 }
 
 // GetConfig reads, pareses and returns the configuration
