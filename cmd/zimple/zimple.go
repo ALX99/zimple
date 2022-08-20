@@ -78,6 +78,9 @@ func run(ctx context.Context, cfg zimple.Config) {
 			return
 
 		case <-sigRedraw:
+			for len(sigRedraw) > 0 {
+				<-sigChan
+			}
 			mu.RLock()
 			err := exec.CommandContext(ctx, "xsetroot", "-name", strings.Join(outputs, cfg.Settings.Separator)).Run()
 			if err != nil {

@@ -40,7 +40,7 @@ settings:
   separator: " / "       # [Optional] A separator to use between the blocks
 blocks:                  # [Mandatory] A list of blocks
   - command: date        # [Mandatory] The command to run
-    interval: 1h         # [Optional] How often to run the command (leave empty for once every 30 days)
+    interval: 1h         # [Optional] The max amount of time that a block can go without executing (default is 30days)
     icon: " "           # [Optional] An icon that is prefixed to the output
     enabled: "date"      # [Optional] A bash if condition. If it evaluates to true the block is enabled
     update_signals: [50] # [Optional] A list of signal number which causes the block to update
