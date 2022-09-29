@@ -51,7 +51,6 @@ linters:
     - unparam
     - usestdlibvars
     - wastedassign
-    - wsl
 
 linters-settings:
   errcheck:
