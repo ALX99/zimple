@@ -25,6 +25,7 @@ type Settings struct {
 // GetConfig reads, pareses and returns the configuration
 func GetConfig() (Config, error) {
 	cfgLoc := getCfgFileLoc()
+
 	f, err := os.ReadFile(cfgLoc)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -61,6 +62,7 @@ func GetConfig() (Config, error) {
 // filterDisabledBlocks removes all blocks that are not enabled
 func filterDisabledBlocks(blocks []Block) ([]Block, error) {
 	bls := make([]Block, 0, len(blocks))
+
 	for _, block := range blocks {
 		if block.Enabled == "" {
 			bls = append(bls, block)
@@ -68,13 +70,16 @@ func filterDisabledBlocks(blocks []Block) ([]Block, error) {
 		}
 
 		var ee *exec.ExitError
+
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
+
 		_, err := exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("if %s;then exit 0;else exit 21;fi", block.Enabled)).CombinedOutput()
 		if err != nil {
 			if errors.As(err, &ee) && ee.ExitCode() == 21 {
 				continue
 			}
+
 			return []Block{}, err
 		}
 
@@ -90,5 +95,6 @@ func getCfgFileLoc() string {
 	if dir != "" {
 		return path.Join(path.Clean(dir), "zimple") + "/config.yaml"
 	}
+
 	return "~/.config/zimple/config.yaml"
 }

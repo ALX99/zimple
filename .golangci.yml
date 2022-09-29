@@ -1,0 +1,115 @@
+linters:
+  enable-all: false
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - containedctx
+    - decorder
+    - dogsled
+    - dupl
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forcetypeassert
+    - gci
+    - goconst
+    - gocritic
+    - godox
+    - goerr113
+    - gofmt
+    - goimports
+    - goprintffuncname
+    # - gosec
+    - importas
+    - ireturn
+    - misspell
+    - nilerr
+    - nilnil
+    - noctx
+    - nonamedreturns
+    - nosprintfhostport
+    - prealloc
+    - promlinter
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - tenv
+    - thelper
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - wsl
+
+linters-settings:
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    check-type-assertions: true
+    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`.
+    # Default: false
+    check-blank: true
+    # To disable the errcheck built-in exclude list.
+    # See `-excludeonly` option in https://github.com/kisielk/errcheck#excluding-functions for details.
+    # Default: false
+    disable-default-exclusions: true
+
+  govet:
+    # Report about shadowed variables.
+    check-shadowing: true
+    # Settings per analyzer.
+    enable-all: true
+
+  exhaustive:
+    # Program elements to check for exhaustiveness.
+    check:
+      - switch
+      - map
+
+  misspell:
+    locale: US
+
+  promlinter:
+    # Promlinter cannot infer all metrics name in static analysis.
+    # Enable strict mode will also include the errors caused by failing to parse the args.
+    strict: true
+
+  #  revive:
+    # Enable all available rules.
+    #    rules:
+#      - name: atomic
+#        disabled: false
+#      - name: bare-return
+#        disabled: false
+#      - name: blank-imports
+#        disabled: false
+#      - name: bool-literal-in-expr
+#        disabled: false
+#      - name: call-to-gc
+#        disabled: false
+#      - name: confusing-naming
+#        disabled: false
+#      - name: constant-logical-expr
+#        disabled: false
+#      - name: context-as-argument
+#        disabled: false
+#      - name: datarace
+#        disabled: false
+
+issues:
+  max-issues-per-linter: 100
+  max-same-issues: 100
+
+run:
+  timeout: 5m

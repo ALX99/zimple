@@ -25,7 +25,7 @@ type Block struct {
 
 // Start starts executing the block and returns a channel where output
 // can be listened to.
-// The output channel will be closed when the context is cancelled
+// The output channel will be closed when the context is canceled
 func (b *Block) Start(ctx context.Context) <-chan string {
 	if b.Interval == 0 {
 		b.Interval = 30 * 24 * time.Hour
@@ -37,6 +37,7 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 
 	go func() {
 		b.runAndSend(ctx)
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -44,7 +45,7 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 				return
 
 			case sig := <-b.sigChan:
-				sigNum := int(sig.(syscall.Signal))
+				sigNum := int(sig.(syscall.Signal)) // nolint:forcetypeassert
 				for _, i := range b.UpdateSignals {
 					if i == sigNum {
 						b.runAndSend(ctx)
@@ -67,6 +68,7 @@ func (b *Block) runAndSend(ctx context.Context) {
 	for len(b.sigChan) > 0 {
 		<-b.sigChan
 	}
+
 	for len(b.ticker.C) > 0 {
 		<-b.ticker.C
 	}
@@ -86,6 +88,7 @@ func (b *Block) run(ctx context.Context) (string, error) {
 	if b.Icon != "" {
 		return fmt.Sprintf("%s%s", b.Icon, res), err
 	}
+
 	return string(res), err
 }
 
