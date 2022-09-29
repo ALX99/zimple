@@ -16,6 +16,7 @@ import (
 
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+
 	cfg, err := zimple.GetConfig()
 	if err != nil {
 		fmt.Fprint(os.Stderr, err.Error())
@@ -37,6 +38,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 	// Start all of the blocks
 	for i := range cfg.Blocks {
 		wg.Add(1)
+
 		go func(b *zimple.Block, i int) {
 			for output := range b.Start(ctx) {
 				mu.Lock()
@@ -44,6 +46,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 				mu.Unlock()
 				sigRedraw <- 0
 			}
+
 			wg.Done()
 		}(&cfg.Blocks[i], i)
 	}
@@ -69,12 +72,15 @@ func run(ctx context.Context, cfg zimple.Config) {
 			// Drain the signals
 			for range sigRedraw {
 			}
+
 			newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+
 			err := exec.CommandContext(newCtx, "xsetroot", "-name", "Zimple has shut down").Run()
 			if err != nil {
 				fmt.Fprint(os.Stderr, err.Error())
 			}
-			cancel()
+
 			return
 
 		case <-sigRedraw:
@@ -82,17 +88,16 @@ func run(ctx context.Context, cfg zimple.Config) {
 				<-sigChan
 			}
 			mu.RLock()
+
 			err := exec.CommandContext(ctx, "xsetroot", "-name", strings.Join(outputs, cfg.Settings.Separator)).Run()
 			if err != nil {
 				// Give it a second try
 				err = exec.CommandContext(ctx, "xsetroot", "-name", fmt.Sprintf("error: %s", err)).Run()
 				if err != nil {
-					// Give up
-					fmt.Fprint(os.Stderr, err.Error())
+					fmt.Fprint(os.Stderr, err.Error()) // Give up
 				}
 			}
 			mu.RUnlock()
 		}
 	}
-
 }
