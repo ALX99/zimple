@@ -3,17 +3,15 @@ package zimple
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 	"time"
 )
 
 // Block represents a single block in the statusbar
 type Block struct {
 	output        chan string
-	sigChan       chan os.Signal
+	rerun         chan interface{}
 	ticker        *time.Ticker
 	Command       string        `yaml:"command"`
 	Icon          string        `yaml:"icon"`
@@ -33,7 +31,7 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 
 	b.ticker = time.NewTicker(b.Interval)
 	b.output = make(chan string)
-	b.sigChan = make(chan os.Signal, 100)
+	b.rerun = make(chan interface{}, 100)
 
 	go func() {
 		b.runAndSend(ctx, false)
@@ -41,17 +39,13 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 		for {
 			select {
 			case <-ctx.Done():
-				close(b.output)
+				b.ticker.Stop() // Stop the ticker
+				close(b.output) // Close the output channel
+				close(b.rerun)  // Close the rerun channel
 				return
 
-			case sig := <-b.sigChan:
-				sigNum := int(sig.(syscall.Signal)) // nolint:forcetypeassert
-				for _, i := range b.UpdateSignals {
-					if i == sigNum {
-						b.runAndSend(ctx, true)
-						break
-					}
-				}
+			case <-b.rerun:
+				b.runAndSend(ctx, true)
 
 			case <-b.ticker.C:
 				b.runAndSend(ctx, false)
@@ -91,7 +85,7 @@ func (b *Block) runCmd(ctx context.Context) (string, error) {
 	return string(res), err
 }
 
-// InformSignal informs the block of a signal
-func (b *Block) InformSignal(sig os.Signal) {
-	b.sigChan <- sig
+// Rerun will re-run this block's command asynchronously
+func (b *Block) Rerun() {
+	b.rerun <- 0
 }

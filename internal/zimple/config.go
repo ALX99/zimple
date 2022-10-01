@@ -36,7 +36,7 @@ func GetConfig() (Config, error) {
 		return Config{
 			Blocks: []Block{{
 				output:        make(chan string),
-				sigChan:       make(chan os.Signal),
+				rerun:         make(chan interface{}),
 				Command:       "printf",
 				Icon:          "",
 				Enabled:       "",

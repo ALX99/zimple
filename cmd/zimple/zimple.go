@@ -51,27 +51,33 @@ func run(ctx context.Context, cfg zimple.Config) {
 		}(&cfg.Blocks[i], i)
 	}
 
+	// Goroutine that handles received signals
 	go func() {
 		for sig := range sigChan {
 			for i := range cfg.Blocks {
-				cfg.Blocks[i].InformSignal(sig)
+				for _, updateSignal := range cfg.Blocks[i].UpdateSignals {
+					if updateSignal == int(sig.(syscall.Signal)) { // nolint:forcetypeassert
+						cfg.Blocks[i].Rerun()
+					}
+				}
 			}
 		}
-	}()
-
-	go func() {
-		wg.Wait()
-		signal.Stop(sigChan)
-		close(sigRedraw)
-		close(sigChan)
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			// Drain the signals
-			for range sigRedraw {
-			}
+			signal.Stop(sigChan)
+			close(sigChan)
+
+			// Drain all redraw signals, we are shutting down
+			go func() {
+				for range sigRedraw {
+				}
+			}()
+
+			wg.Wait() // wait for all blocks to shut down
+			close(sigRedraw)
 
 			newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
@@ -84,9 +90,6 @@ func run(ctx context.Context, cfg zimple.Config) {
 			return
 
 		case <-sigRedraw:
-			for len(sigRedraw) > 0 {
-				<-sigChan
-			}
 			mu.RLock()
 
 			err := exec.CommandContext(ctx, "xsetroot", "-name", strings.Join(outputs, cfg.Settings.Separator)).Run()
