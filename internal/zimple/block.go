@@ -36,7 +36,7 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 	b.sigChan = make(chan os.Signal, 100)
 
 	go func() {
-		b.runAndSend(ctx)
+		b.runAndSend(ctx, false)
 
 		for {
 			select {
@@ -48,13 +48,13 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 				sigNum := int(sig.(syscall.Signal)) // nolint:forcetypeassert
 				for _, i := range b.UpdateSignals {
 					if i == sigNum {
-						b.runAndSend(ctx)
+						b.runAndSend(ctx, true)
 						break
 					}
 				}
 
 			case <-b.ticker.C:
-				b.runAndSend(ctx)
+				b.runAndSend(ctx, false)
 			}
 		}
 	}()
@@ -63,18 +63,17 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 }
 
 // runAndSend runs the block and sends the result to the output channel
-func (b *Block) runAndSend(ctx context.Context) {
-	// Drain the channels
-	for len(b.sigChan) > 0 {
-		<-b.sigChan
+func (b *Block) runAndSend(ctx context.Context, resetTicker bool) {
+	// Reset the ticker in case this method call was triggered
+	// by an update signal
+	if resetTicker {
+		for len(b.ticker.C) > 0 {
+			<-b.ticker.C
+		}
+		b.ticker.Reset(b.Interval) // Reset the ticker
 	}
 
-	for len(b.ticker.C) > 0 {
-		<-b.ticker.C
-	}
-	b.ticker.Reset(b.Interval)
-
-	o, err := b.run(ctx)
+	o, err := b.runCmd(ctx)
 	if err != nil {
 		b.output <- "err: " + err.Error()
 	} else {
@@ -82,8 +81,8 @@ func (b *Block) runAndSend(ctx context.Context) {
 	}
 }
 
-// run runs the block and returns the output including the icon
-func (b *Block) run(ctx context.Context) (string, error) {
+// runCmd runs the block's command and returns the output including the icon
+func (b *Block) runCmd(ctx context.Context) (string, error) {
 	res, err := exec.CommandContext(ctx, b.Command, b.Args...).CombinedOutput()
 	if b.Icon != "" {
 		return fmt.Sprintf("%s%s", b.Icon, res), err
