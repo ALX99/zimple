@@ -34,7 +34,7 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 	b.rerun = make(chan interface{}, 100)
 
 	go func() {
-		b.runAndSend(ctx, false)
+		b.runAndSend(ctx)
 
 		for {
 			select {
@@ -45,10 +45,16 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 				return
 
 			case <-b.rerun:
-				b.runAndSend(ctx, true)
+				// Reset the ticker due to an out-of-flow rerun
+				for len(b.ticker.C) > 0 {
+					<-b.ticker.C
+				}
+				b.ticker.Reset(b.Interval)
+
+				b.runAndSend(ctx)
 
 			case <-b.ticker.C:
-				b.runAndSend(ctx, false)
+				b.runAndSend(ctx)
 			}
 		}
 	}()
@@ -57,16 +63,7 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 }
 
 // runAndSend runs the block and sends the result to the output channel
-func (b *Block) runAndSend(ctx context.Context, resetTicker bool) {
-	// Reset the ticker in case this method call was triggered
-	// by an update signal
-	if resetTicker {
-		for len(b.ticker.C) > 0 {
-			<-b.ticker.C
-		}
-		b.ticker.Reset(b.Interval) // Reset the ticker
-	}
-
+func (b *Block) runAndSend(ctx context.Context) {
 	o, err := b.runCmd(ctx)
 	if err != nil {
 		b.output <- "err: " + err.Error()
