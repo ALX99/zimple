@@ -51,6 +51,8 @@ blocks:                  # [Mandatory] A list of blocks
 
 ### Example configuration
 
+**Note:** Icons may not be properly be displayed in the browser. Make sure you have a nerd font installed.
+
 ```yaml
 settings:
   separator: " / "
