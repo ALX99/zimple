@@ -62,6 +62,7 @@ func GetConfig() (Config, error) {
 // filterDisabledBlocks removes all blocks that are not enabled
 func filterDisabledBlocks(blocks []Block) ([]Block, error) {
 	bls := make([]Block, 0, len(blocks))
+	var ee *exec.ExitError
 
 	for _, block := range blocks {
 		if block.Enabled == "" {
@@ -69,15 +70,13 @@ func filterDisabledBlocks(blocks []Block) ([]Block, error) {
 			continue
 		}
 
-		var ee *exec.ExitError
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		_, err := exec.CommandContext(ctx, "bash", "-c", fmt.Sprintf("if %s;then exit 0;else exit 21;fi", block.Enabled)).CombinedOutput()
 		if err != nil {
 			if errors.As(err, &ee) && ee.ExitCode() == 21 {
-				continue
+				continue // Block disabled
 			}
 
 			return []Block{}, err
