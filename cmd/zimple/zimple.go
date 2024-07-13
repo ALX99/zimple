@@ -48,6 +48,9 @@ func run(ctx context.Context, cfg zimple.Config) {
 
 		go func() {
 			for output := range cfg.Blocks[i].Start(ctx) {
+				if ctx.Err() != nil { // context has been cancelled
+					return
+				}
 				mu.Lock()
 				outputs[i] = output.Stdout
 				mu.Unlock()
@@ -75,15 +78,13 @@ func run(ctx context.Context, cfg zimple.Config) {
 		case <-ctx.Done():
 			signal.Stop(sigChan)
 			close(sigChan)
+			close(sigRedraw)
 
 			// Drain all redraw signals, we are shutting down
-			go func() {
-				for range sigRedraw {
-				}
-			}()
+			for range sigRedraw { //nolint:revive
+			}
 
 			wg.Wait() // wait for all blocks to shut down
-			close(sigRedraw)
 
 			newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
