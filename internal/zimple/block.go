@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"os/exec"
+	"slices"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -96,7 +98,9 @@ func (b *Block) runCmd(ctx context.Context) (string, string, error) {
 	return stdoutBuf.String(), stderrBuf.String(), nil
 }
 
-// Rerun will re-run this block's command asynchronously
-func (b *Block) Rerun() {
-	b.rerun <- 0
+// NotifySignal notifies the block that a signal has been received
+func (b *Block) NotifySignal(s syscall.Signal) {
+	if slices.Contains(b.UpdateSignals, int(s)) {
+		b.rerun <- 0
+	}
 }

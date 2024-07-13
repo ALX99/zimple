@@ -58,11 +58,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 	go func() {
 		for sig := range sigChan {
 			for i := range cfg.Blocks {
-				for _, updateSignal := range cfg.Blocks[i].UpdateSignals {
-					if updateSignal == int(sig.(syscall.Signal)) { // nolint:forcetypeassert
-						cfg.Blocks[i].Rerun()
-					}
-				}
+				cfg.Blocks[i].NotifySignal(sig.(syscall.Signal)) // nolint:forcetypeassert
 			}
 		}
 	}()
