@@ -82,25 +82,26 @@ func run(ctx context.Context, cfg zimple.Config) {
 			newCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 
-			err := exec.CommandContext(newCtx, "xsetroot", "-name", "Zimple has shut down").Run()
-			if err != nil {
-				fmt.Fprint(os.Stderr, err.Error())
-			}
-
+			setStatusBar(newCtx, "Zimple has shut down", cfg)
 			return
 
 		case <-sigRedraw:
 			mu.RLock()
 
-			err := exec.CommandContext(ctx, "xsetroot", "-name", strings.Join(outputs, cfg.Settings.Separator)).Run()
-			if err != nil {
-				// Give it a second try
-				err = exec.CommandContext(ctx, "xsetroot", "-name", fmt.Sprintf("error: %s", err)).Run()
-				if err != nil {
-					fmt.Fprint(os.Stderr, err.Error()) // Give up
-				}
-			}
+			setStatusBar(ctx, strings.Join(outputs, cfg.Settings.Separator), cfg)
 			mu.RUnlock()
 		}
+	}
+}
+
+func setStatusBar(ctx context.Context, output string, cfg zimple.Config) {
+	if cfg.Settings.WriteToStdout {
+		fmt.Fprintln(os.Stdout, output)
+		return
+	}
+
+	err := exec.CommandContext(ctx, "xsetroot", "-name", output).Run()
+	if err != nil {
+		fmt.Fprint(os.Stderr, err.Error())
 	}
 }

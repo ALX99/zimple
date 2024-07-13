@@ -40,6 +40,7 @@ if $XDG_CONFIG_HOME is not set
 ```yaml
 settings:
   separator: " / "       # [Optional] A separator to use between the blocks
+  write_to_stdout: false # [Optional] Write the output to stdout instead of using xsetroot
 blocks:                  # [Mandatory] A list of blocks
   - command: date        # [Mandatory] The command to run
     interval: 1h         # [Optional] The max amount of time that a block can go without executing (default is 30days)

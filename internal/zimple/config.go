@@ -19,7 +19,8 @@ type Config struct {
 }
 
 type Settings struct {
-	Separator string `yaml:"separator"`
+	Separator     string `yaml:"separator"`
+	WriteToStdout bool   `yaml:"write_to_stdout"`
 }
 
 // GetConfig reads, pareses and returns the configuration
