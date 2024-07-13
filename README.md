@@ -1,6 +1,7 @@
 # zimple
 
-Zimple is a simple statusbar for any xsetroot supported WM.
+Zimple is a simple statusbar for xsetroot supported WM (such as [dwm](https://dwm.suckless.org)) and status bars
+that can read the status from stdout (such as [creek](https://github.com/nmeum/creek)).
 
 ![example](example.png)
 
