@@ -42,8 +42,11 @@ func run(ctx context.Context, cfg zimple.Config) {
 		go func(b *zimple.Block, i int) {
 			for output := range b.Start(ctx) {
 				mu.Lock()
-				outputs[i] = output
+				outputs[i] = output.Stdout
 				mu.Unlock()
+				if output.Stderr != "" {
+					fmt.Fprint(os.Stderr, output.Stderr)
+				}
 				sigRedraw <- 0
 			}
 

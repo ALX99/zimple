@@ -1,8 +1,8 @@
 package zimple
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 	"time"
@@ -10,7 +10,7 @@ import (
 
 // Block represents a single block in the statusbar
 type Block struct {
-	output        chan string
+	output        chan BlockOutput
 	rerun         chan interface{}
 	ticker        *time.Ticker
 	Command       string        `yaml:"command"`
@@ -21,16 +21,21 @@ type Block struct {
 	Interval      time.Duration `yaml:"interval"`
 }
 
+type BlockOutput struct {
+	Stdout string
+	Stderr string
+}
+
 // Start starts executing the block and returns a channel where output
 // can be listened to.
 // The output channel will be closed when the context is canceled
-func (b *Block) Start(ctx context.Context) <-chan string {
+func (b *Block) Start(ctx context.Context) <-chan BlockOutput {
 	if b.Interval == 0 {
 		b.Interval = 30 * 24 * time.Hour
 	}
 
 	b.ticker = time.NewTicker(b.Interval)
-	b.output = make(chan string)
+	b.output = make(chan BlockOutput)
 	b.rerun = make(chan interface{}, 100)
 
 	go func() {
@@ -64,22 +69,31 @@ func (b *Block) Start(ctx context.Context) <-chan string {
 
 // runAndSend runs the block and sends the result to the output channel
 func (b *Block) runAndSend(ctx context.Context) {
-	o, err := b.runCmd(ctx)
+	stdout, stderr, err := b.runCmd(ctx)
 	if err != nil {
-		b.output <- "err: " + err.Error()
+		b.output <- BlockOutput{Stdout: "err: " + err.Error()}
 	} else {
-		b.output <- strings.TrimSpace(o)
+		b.output <- BlockOutput{
+			Stdout: strings.TrimSpace(stdout),
+			Stderr: strings.TrimSpace(stderr),
+		}
 	}
 }
 
-// runCmd runs the block's command and returns the output including the icon
-func (b *Block) runCmd(ctx context.Context) (string, error) {
-	res, err := exec.CommandContext(ctx, b.Command, b.Args...).CombinedOutput()
-	if b.Icon != "" {
-		return fmt.Sprintf("%s%s", b.Icon, res), err
+// runCmd runs the block's command and returns the stdout, stderr and a possible error
+func (b *Block) runCmd(ctx context.Context) (string, string, error) {
+	cmd := exec.CommandContext(ctx, b.Command, b.Args...)
+	stdoutBuf := bytes.NewBufferString(b.Icon)
+	stderrBuf := bytes.NewBufferString("")
+
+	cmd.Stdout = stdoutBuf
+	cmd.Stderr = stderrBuf
+
+	if err := cmd.Run(); err != nil {
+		return "", "", err
 	}
 
-	return string(res), err
+	return stdoutBuf.String(), stderrBuf.String(), nil
 }
 
 // Rerun will re-run this block's command asynchronously

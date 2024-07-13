@@ -36,8 +36,9 @@ func GetConfig() (Config, error) {
 		// Safe default if no config found
 		return Config{
 			Blocks: []Block{{
-				output:        make(chan string),
+				output:        make(chan BlockOutput),
 				rerun:         make(chan interface{}),
+				ticker:        &time.Ticker{},
 				Command:       "printf",
 				Icon:          "",
 				Enabled:       "",
