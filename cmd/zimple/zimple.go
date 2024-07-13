@@ -48,7 +48,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 
 		go func() {
 			for output := range cfg.Blocks[i].Start(ctx) {
-				if ctx.Err() != nil { // context has been cancelled
+				if ctx.Err() != nil { // context has been canceled
 					return
 				}
 				mu.Lock()
