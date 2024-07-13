@@ -35,6 +35,13 @@ func run(ctx context.Context, cfg zimple.Config) {
 	sigChan := make(chan os.Signal, 10)
 	signal.Notify(sigChan)
 
+	// initialize default text
+	for i := range outputs {
+		if outputs[i] == "" {
+			outputs[i] = cfg.Blocks[i].Icon + "..."
+		}
+	}
+
 	// Start all of the blocks
 	for i := range cfg.Blocks {
 		wg.Add(1)

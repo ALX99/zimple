@@ -27,7 +27,6 @@ linters:
     - goconst
     - gocritic
     - godox
-    - goerr113
     - gofmt
     - goimports
     - goprintffuncname
@@ -65,8 +64,6 @@ linters-settings:
     disable-default-exclusions: true
 
   govet:
-    # Report about shadowed variables.
-    check-shadowing: true
     # Settings per analyzer.
     enable-all: true
 
