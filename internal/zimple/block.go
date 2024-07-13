@@ -13,7 +13,7 @@ import (
 // Block represents a single block in the statusbar
 type Block struct {
 	output        chan BlockOutput
-	rerun         chan interface{}
+	rerun         chan struct{}
 	ticker        *time.Ticker
 	Command       string        `yaml:"command"`
 	Icon          string        `yaml:"icon"`
@@ -38,7 +38,7 @@ func (b *Block) Start(ctx context.Context) <-chan BlockOutput {
 
 	b.ticker = time.NewTicker(b.Interval)
 	b.output = make(chan BlockOutput)
-	b.rerun = make(chan interface{}, 100)
+	b.rerun = make(chan struct{}, 100)
 
 	go func() {
 		b.runAndSend(ctx)
@@ -101,6 +101,6 @@ func (b *Block) runCmd(ctx context.Context) (string, string, error) {
 // NotifySignal notifies the block that a signal has been received
 func (b *Block) NotifySignal(s syscall.Signal) {
 	if slices.Contains(b.UpdateSignals, int(s)) {
-		b.rerun <- 0
+		b.rerun <- struct{}{}
 	}
 }

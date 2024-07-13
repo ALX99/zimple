@@ -37,7 +37,7 @@ func GetConfig() (Config, error) {
 		return Config{
 			Blocks: []Block{{
 				output:        make(chan BlockOutput),
-				rerun:         make(chan interface{}),
+				rerun:         make(chan struct{}),
 				ticker:        &time.Ticker{},
 				Command:       "printf",
 				Icon:          "",

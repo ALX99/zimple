@@ -31,7 +31,7 @@ func run(ctx context.Context, cfg zimple.Config) {
 	wg := sync.WaitGroup{}
 	mu := sync.RWMutex{}
 	outputs := make([]string, len(cfg.Blocks))
-	sigRedraw := make(chan interface{})
+	sigRedraw := make(chan struct{})
 	sigChan := make(chan os.Signal, 10)
 	signal.Notify(sigChan)
 
@@ -39,19 +39,19 @@ func run(ctx context.Context, cfg zimple.Config) {
 	for i := range cfg.Blocks {
 		wg.Add(1)
 
-		go func(b *zimple.Block, i int) {
-			for output := range b.Start(ctx) {
+		go func() {
+			for output := range cfg.Blocks[i].Start(ctx) {
 				mu.Lock()
 				outputs[i] = output.Stdout
 				mu.Unlock()
 				if output.Stderr != "" {
 					fmt.Fprint(os.Stderr, output.Stderr)
 				}
-				sigRedraw <- 0
+				sigRedraw <- struct{}{}
 			}
 
 			wg.Done()
-		}(&cfg.Blocks[i], i)
+		}()
 	}
 
 	// Goroutine that handles received signals
@@ -86,7 +86,6 @@ func run(ctx context.Context, cfg zimple.Config) {
 
 		case <-sigRedraw:
 			mu.RLock()
-
 			setStatusBar(ctx, strings.Join(outputs, cfg.Settings.Separator), cfg)
 			mu.RUnlock()
 		}
